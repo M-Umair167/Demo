@@ -16,43 +16,68 @@
     </div>
 </section>
 
-
+    <!-- Main Content -->
+</div>
 <section class="tutorial-detail-preview">
     <div class="container">
-        <div class="tutorial-preview-content">
-            <h2>Python Introduction</h2>
-            <p>Python is a popular programming language. It was created by Guido van Rossum.</p>
-            <p>It is used for:</p>
-            <ul>
-                <li>web development (server-side)</li>
-                <li>software development</li>
-                <li>mathematics</li>
-                <li>system scripting</li>
-            </ul>
-            <h3>What can Python do?</h3>
-            <ul>
-                <li>Python can be used on a server to create web applications.</li>
-                <li>Python can be used alongside software to create workflows.</li>
-                <li>Python can connect to database systems. It can also read and modify files.</li>
-            </ul>
+        <div class="tutorial-preview-content" id="content">
+            <h2>Welcome to CodePy Tutorials</h2>
+            <h2>Why Choose CodePy Python Tutorials?</h2>
+                  <ul class="highlights-list">
+                    <li>
+                      <strong>Beginner-Friendly:</strong>
+                      Our tutorials start from the basics — no prior coding experience needed!
+                    </li>
+                    <li>
+                      <strong>Step-by-Step Learning:</strong>
+                      Each concept is broken down into simple, easy-to-follow lessons.
+                    </li>
+                    <li>
+                      <strong>Real-World Examples:</strong>
+                      Understand Python with examples and mini-projects.
+                    </li>
+                    <li>
+                      <strong>Modern Topics Included:</strong>
+                      Cover not only the basics but also data structures, OOP, file handling, and web development with Python.
+                    </li>
+                    <li>
+                      <strong>Beautiful and Clean UI:</strong>
+                      Learn in an environment that's distraction-free and designed for ease.
+                    </li>
+                    <li>
+                      <strong>Free and Open for All:</strong>
+                      100% free tutorials. No signup required. Start learning anytime!
+                    </li>
+                    <li>
+                      <strong>Quick Navigation:</strong>
+                      Instantly jump to any topic using the sidebar for smooth browsing.
+                    </li>
+                    <li>
+                      <strong>Trusted Learning Path:</strong>
+                      Designed based on how real programmers learn — not just theory but also practice.
+                    </li>
+                  </ul>
         </div>
+
         <div class="tutorial-navigation">
             <h3>Tutorial Navigation</h3>
             <ul>
-                <li><a href="#" class="active">Python Introduction</a></li>
-                <li><a href="#">Python Syntax</a></li>
-                <li><a href="#">Python Comments</a></li>
-                <li><a href="#">Python Variables</a></li>
-                <li><a href="#">Python Data Types</a></li>
-                <li><a href="#">Python Numbers</a></li>
-                <li><a href="#">Python Casting</a></li>
-                <li><a href="#">Python Strings</a></li>
-                <li><a href="#">Python Booleans</a></li>
-                <li><a href="#">Python Operators</a></li>
-                <li><a href="#">Python Lists</a></li>
+                <li><a href="#" class="sidebar-link" onclick="loadContent('intro', event)">Python Intro</a></li>
+                <li><a href="#" class="sidebar-link" onclick="loadContent('syntax', event)">Python Syntax</a></li>
+                <li><a href="#" class="sidebar-link" onclick="loadContent('variables', event)">Python Variables</a></li>
+                <li><a href="#" class="sidebar-link" onclick="loadContent('data_types', event)">Python Data Types</a></li>
+                <li><a href="#" class="sidebar-link" onclick="loadContent('numbers', event)">Python Numbers</a></li>
+                <li><a href="#" class="sidebar-link" onclick="loadContent('casting', event)">Python Casting</a></li>
+                <li><a href="#" class="sidebar-link" onclick="loadContent('strings', event)">Python Strings</a></li>
+                <li><a href="#" class="sidebar-link" onclick="loadContent('booleans', event)">Python Booleans</a></li>
+                <li><a href="#" class="sidebar-link" onclick="loadContent('operators', event)">Python Operators</a></li>
+                <li><a href="#" class="sidebar-link" onclick="loadContent('lists', event)">Python Lists</a></li>
             </ul>
         </div>
     </div>
 </section>
 
+<script src="{{ url_for('static', filename='js/documantation.js') }}"></script>
 {% endblock %}
+
+
