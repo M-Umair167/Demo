@@ -1,0 +1,50 @@
+/* Custom styles for authentication system */
+
+/* Add some additional spacing on mobile */
+@media (max-width: 768px) {
+  .container {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}
+
+/* Feature boxes on home page */
+.feature {
+  transition: transform 0.3s ease;
+  height: 100%;
+}
+
+.feature:hover {
+  transform: translateY(-5px);
+}
+
+/* Fix for footer positioning */
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.container {
+  flex: 1;
+}
+
+footer {
+  margin-top: auto;
+}
+
+/* Custom form styling */
+.form-control:focus {
+  box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+}
+
+/* Card styling */
+.card {
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+/* Remove focus outline from buttons when clicked */
+.btn:focus {
+  box-shadow: none !important;
+}

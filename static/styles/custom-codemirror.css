@@ -1,0 +1,10 @@
+/* Change CodeMirror background */
+.CodeMirror {
+    font-family: monospace;
+    height: 430px;
+    color: #000;
+    direction: ltr
+}
+
+  
+  
