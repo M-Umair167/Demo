@@ -75,13 +75,14 @@ def login():
 
 
 # forget password
+
 @app.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
     if request.method == 'POST':
         email = request.form['email']
         user = User.query.filter_by(email=email).first()
         if user:
-            return render_template('reset_password_sent.html', email=email)
+            return render_template('login.html', email=email)
         return render_template('forgot_password.html', error="Email not registered.")
     return render_template('forgot_password.html')
 
