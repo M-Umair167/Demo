@@ -118,7 +118,7 @@ def contact():
         message_text = request.form['message'].strip()
 
         # Validation
-        name_pattern = r'^[^@]+@[^@]+\.[a-zA-Z]{2,6}$'
+        name_pattern = r'^[A-Za-z.]+$'
         email_pattern = r'^[^@]+@[^@]+\.[a-zA-Z]{2,6}$'
 
         if not re.match(name_pattern, name):
