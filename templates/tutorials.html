@@ -5,79 +5,87 @@
 
 {% block content %}
 <section class="tutorials-hero">
-    <div class="container">
-        <div class="tutorials-hero-content">
-            <h1>Step-by-step Python tutorials</h1>
-            <p>Learn Python from scratch with structured lessons and real-world examples</p>
-        </div>
-        <div class="tutorials-hero-image">
-            <img src="{{ url_for('static', filename='pics/program1.webp') }}" alt="Python Tutorials">
-        </div>
+  <div class="container">
+    <div class="tutorials-hero-content">
+      <h1>Step-by-step Python tutorials</h1>
+      <p>Learn Python from scratch with structured lessons and real-world examples</p>
     </div>
+    <div class="tutorials-hero-image">
+      <img src="{{ url_for('static', filename='pics/program1.webp') }}" alt="Python Tutorials">
+    </div>
+  </div>
 </section>
 
-    <!-- Main Content -->
+<!-- Main Content -->
 </div>
 <section class="tutorial-detail-preview">
-    <div class="container">
-        <div class="tutorial-preview-content" id="content">
-            <h2>Welcome to CodePy Tutorials</h2>
-            <h2>Why Choose CodePy Python Tutorials?</h2>
-                  <ul class="highlights-list">
-                    <li>
-                      <strong>Beginner-Friendly:</strong>
-                      Our tutorials start from the basics — no prior coding experience needed!
-                    </li>
-                    <li>
-                      <strong>Step-by-Step Learning:</strong>
-                      Each concept is broken down into simple, easy-to-follow lessons.
-                    </li>
-                    <li>
-                      <strong>Real-World Examples:</strong>
-                      Understand Python with examples and mini-projects.
-                    </li>
-                    <li>
-                      <strong>Modern Topics Included:</strong>
-                      Cover not only the basics but also data structures, OOP, file handling, and web development with Python.
-                    </li>
-                    <li>
-                      <strong>Beautiful and Clean UI:</strong>
-                      Learn in an environment that's distraction-free and designed for ease.
-                    </li>
-                    <li>
-                      <strong>Free and Open for All:</strong>
-                      100% free tutorials. No signup required. Start learning anytime!
-                    </li>
-                    <li>
-                      <strong>Quick Navigation:</strong>
-                      Instantly jump to any topic using the sidebar for smooth browsing.
-                    </li>
-                    <li>
-                      <strong>Trusted Learning Path:</strong>
-                      Designed based on how real programmers learn — not just theory but also practice.
-                    </li>
-                  </ul>
-        </div>
-
-        <div class="tutorial-navigation">
-            <h3>Tutorial Navigation</h3>
-            <ul>
-                <li><a href="#" class="sidebar-link" onclick="loadContent('intro', event)">Python Intro</a></li>
-                <li><a href="#" class="sidebar-link" onclick="loadContent('syntax', event)">Python Syntax</a></li>
-                <li><a href="#" class="sidebar-link" onclick="loadContent('variables', event)">Python Variables</a></li>
-                <li><a href="#" class="sidebar-link" onclick="loadContent('data_types', event)">Python Data Types</a></li>
-                <li><a href="#" class="sidebar-link" onclick="loadContent('numbers', event)">Python Numbers</a></li>
-                <li><a href="#" class="sidebar-link" onclick="loadContent('casting', event)">Python Casting</a></li>
-                <li><a href="#" class="sidebar-link" onclick="loadContent('strings', event)">Python Strings</a></li>
-                <li><a href="#" class="sidebar-link" onclick="loadContent('booleans', event)">Python Booleans</a></li>
-                <li><a href="#" class="sidebar-link" onclick="loadContent('operators', event)">Python Operators</a></li>
-                <li><a href="#" class="sidebar-link" onclick="loadContent('lists', event)">Python Lists</a></li>
-            </ul>
-        </div>
+  <div class="container">
+    <div class="tutorial-preview-content" id="content">
+      <h2>Welcome to CodePy Tutorials</h2>
+      <h2>Why Choose CodePy Python Tutorials?</h2>
+      <ul class="highlights-list">
+        <li>
+          <strong>Beginner-Friendly:</strong>
+          Our tutorials start from the basics — no prior coding experience needed!
+        </li>
+        <li>
+          <strong>Step-by-Step Learning:</strong>
+          Each concept is broken down into simple, easy-to-follow lessons.
+        </li>
+        <li>
+          <strong>Real-World Examples:</strong>
+          Understand Python with examples and mini-projects.
+        </li>
+        <li>
+          <strong>Modern Topics Included:</strong>
+          Cover not only the basics but also data structures, OOP, file handling, and web development with Python.
+        </li>
+        <li>
+          <strong>Beautiful and Clean UI:</strong>
+          Learn in an environment that's distraction-free and designed for ease.
+        </li>
+        <li>
+          <strong>Free and Open for All:</strong>
+          100% free tutorials. No signup required. Start learning anytime!
+        </li>
+        <li>
+          <strong>Quick Navigation:</strong>
+          Instantly jump to any topic using the sidebar for smooth browsing.
+        </li>
+        <li>
+          <strong>Trusted Learning Path:</strong>
+          Designed based on how real programmers learn — not just theory but also practice.
+        </li>
+      </ul>
     </div>
+
+    <div class="tutorial-navigation">
+      <h3>Tutorial Navigation</h3>
+      <ul>
+        <li><a href="#" class="sidebar-link" onclick="loadContent('intro', event)">Python Intro</a></li>
+        <li><a href="#" class="sidebar-link" onclick="loadContent('syntax', event)">Python Syntax</a></li>
+        <li><a href="#" class="sidebar-link" onclick="loadContent('variables', event)">Python Variables</a></li>
+        <li><a href="#" class="sidebar-link" onclick="loadContent('data_types', event)">Python Data Types</a></li>
+        <li><a href="#" class="sidebar-link" onclick="loadContent('numbers', event)">Python Numbers</a></li>
+        <li><a href="#" class="sidebar-link" onclick="loadContent('type_casting', event)">Type Casting</a></li>
+        <li><a href="#" class="sidebar-link" onclick="loadContent('strings', event)">Python Strings</a></li>
+        <li><a href="#" class="sidebar-link" onclick="loadContent('booleans', event)">Python Booleans</a></li>
+        <li><a href="#" class="sidebar-link" onclick="loadContent('operators', event)">Python Operators</a></li>
+        <li><a href="#" class="sidebar-link" onclick="loadContent('lists', event)">Python Lists</a></li>
+        <li><a href="#" class="sidebar-link" onclick="loadContent('tuple', event)">Python Tuple</a></li>
+        <li><a href="#" class="sidebar-link" onclick="loadContent('dictionaries', event)">Python Dictionaries</a></li>
+        <li><a href="#" class="sidebar-link" onclick="loadContent('Sets', event)">Python Sets</a></li>
+        <li><a href="#" class="sidebar-link" onclick="loadContent('loops', event)">Python Loops</a></li>
+        <li><a href="#" class="sidebar-link" onclick="loadContent('functions', event)">Python Functions</a></li>
+        <li><a href="#" class="sidebar-link" onclick="loadContent('Classes', event)">Python Classes</a></li>
+        <li><a href="#" class="sidebar-link" onclick="loadContent('Modules', event)">Python Modules</a></li>
+        <li><a href="#" class="sidebar-link" onclick="loadContent('File_handling', event)">Python File Handling</a></li>
+        <li><a href="#" class="sidebar-link" onclick="loadContent('Exceptions', event)">Python Exceptions</a></li>
+      </ul>
+    </div>
+  </div>
+
 </section>
 
 <script src="{{ url_for('static', filename='js/documantation.js') }}"></script>
 {% endblock %}
-
-

@@ -34,6 +34,7 @@ Requirements:
 - Flask-SQLAlchemy
 - psycopg2-binary
 - bcrypt
+- gunicorn
 
 Installation and Setup:
 ------------------------
