@@ -14,12 +14,41 @@
             </div>
         </div>
 
+
+
         <div class="compiler-container">
             <div class="editor-container">
                 <div class="file-tab">Main.py</div>
-                <div id="editor"></div>
+                <div id="editor">
+                    <textarea id="code-editor">
+# Welcome to the Interactive Python Compiler
+# You can type your code here and run it with the Run button
+# This compiler supports standard Python modules!
+                        
+import random
+import math
+import datetime
+                        
+# Get user input
+name = input("What's your name? ")
+print(f"Hello, {name}!")
+                        
+# Working with modules
+current_time = datetime.datetime.now()
+print(f"Current time: {current_time.strftime('%Y-%m-%d %H:%M:%S')}")
+                        
+lucky_number = random.randint(1, 100)
+print(f"Your lucky number today is: {lucky_number}")
+                        
+# More interactivity
+age = int(input("How old are you? "))
+print(f"In 10 years, you'll be {age + 10} years old.")
+print(f"The square root of your age is approximately {math.sqrt(age):.2f}")
+                        
+print("\nThanks for using our interactive compiler!")</textarea>
+                </div>
             </div>
-            
+
             <div class="output-container">
                 <div class="output-header">
                     <h3>Output</h3>
@@ -28,6 +57,10 @@
                 <div id="output" class="output">
                     <div class="output-content"></div>
                     <div class="execution-status success">=== Code Execution Successful</div>
+                </div>
+                <div id="input-area" class="input-container" style="display: none;">
+                    <span class="input-prompt">></span>
+                    <input type="text" id="user-input" placeholder="Enter your input here..." autocomplete="off">
                 </div>
             </div>
         </div>
@@ -69,56 +102,443 @@
 </section>
 
 
-    <!-- compiler scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
-    <script src="{{ url_for('static', filename='js/compiler.js') }}"></script>
-    <!-- <script>
-        // Fallback for CodeMirror if CDN fails
-        window.addEventListener('error', function (e) {
-          if (e.target.tagName === 'SCRIPT' && e.target.src.includes('codemirror')) {
-            console.log('CodeMirror failed to load, using fallback');
-            const editorElement = document.getElementById('editor');
-            if (editorElement) {
-              setTimeout(() => {
-                if (typeof CodeMirror === 'undefined') {
-                  editorElement.innerHTML = '<textarea class="fallback-editor" rows="10" cols="50">def greet():\n    return "Hi!"\n\nprint(greet())</textarea>';
-    
-                  // Add some basic styling
-                  const style = document.createElement('style');
-                  style.textContent = `
-                  .fallback-editor {
-                    width: 100%;
-                    height: 100%;
-                    background-color: #282a36;
-                    color: #f8f8f2;
-                    border: none;
-                    padding: 10px;
-                    font-family: monospace;
-                    resize: none;
-                  }
-                `;
-                  document.head.appendChild(style);
-    
-                  // Add run functionality
-                  const runBtn = document.getElementById('run-btn');
-                  const output = document.querySelector('.output-content');
-                  const executionStatus = document.querySelector('.execution-status');
-    
-                  if (runBtn) {
-                    runBtn.addEventListener('click', function () {
-                      const code = document.querySelector('.fallback-editor').value;
-    
-                      // Clear previous output
-                      output.textContent = 'Hi!';
-                      executionStatus.textContent = '=== Code Execution Successful';
-                      executionStatus.className = 'execution-status success';
-                    });
-                  }
+<!-- compiler scripts -->
+<!-- <script src="{{ url_for('static', filename='js/compiler.js') }}"></script> -->
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const codeEditor = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
+            mode: 'python',
+            theme: 'dracula',
+            lineNumbers: true,
+            tabSize: 4,
+            indentUnit: 4,
+            indentWithTabs: false,
+            smartIndent: true,
+            autofocus: true,
+            extraKeys: {
+                "Tab": function (cm) {
+                    if (cm.somethingSelected()) {
+                        cm.indentSelection("add");
+                    } else {
+                        cm.replaceSelection("    ", "end", "+input");
+                    }
                 }
-              }, 1000);
             }
-          }
-        }, true);
-      </script> -->
+        });
+
+        const runBtn = document.getElementById('run-btn');
+        const clearBtn = document.getElementById('clear-output');
+        const outputDiv = document.getElementById('output');
+        const inputArea = document.getElementById('input-area');
+        const userInput = document.getElementById('user-input');
+
+        let isWaitingForInput = false;
+        let previousInput = '';
+        let currentCode = '';
+
+        runBtn.addEventListener('click', () => {
+            executeCode();
+        });
+
+        clearBtn.addEventListener('click', () => {
+            outputDiv.innerHTML = '<span class="text-muted">// The output of your code will appear here...</span>';
+            inputArea.style.display = 'none';
+            isWaitingForInput = false;
+            previousInput = '';
+        });
+
+        userInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && isWaitingForInput) {
+                e.preventDefault();
+                const input = userInput.value;
+                // appendOutput(`${input}\n`);
+
+                const previousOutput = outputDiv.querySelector('div:last-child');
+                // if (previousOutput) {
+                //     previousOutput.textContent = previousOutput.textContent.trimEnd() + ' ' + input;
+                // } 
+
+                if (previousOutput && previousOutput.textContent.trim().endsWith('?')) {
+                    previousOutput.textContent += ' ' + input;
+                } else {
+                    appendOutput(input + '\n');
+                }
+
+
+                userInput.value = '';
+                continueExecution(input);
+            }
+        });
+
+        function executeCode() {
+            currentCode = codeEditor.getValue();
+            outputDiv.innerHTML = '';
+            inputArea.style.display = 'none';
+            isWaitingForInput = false;
+            previousInput = '';
+
+            fetch('/api/execute', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: currentCode, input: '' })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.output) appendOutput(data.output);
+                    if (data.status === 'error') {
+                        appendOutput(`\n${data.error}\n`, 'error-text');
+                        if (data.traceback) appendOutput(`${data.traceback}\n`, 'error-text');
+                    }
+                    if (data.status === 'waiting' || data.waiting_for_input) {
+                        isWaitingForInput = true;
+                        inputArea.style.display = 'flex';
+                        userInput.focus();
+                    }
+                })
+                .catch(error => {
+                    appendOutput(`Error executing code: ${error.message}`, 'error-text');
+                });
+        }
+
+        function continueExecution(input) {
+            fetch('/api/continue_execution', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    code: currentCode,
+                    input: input,
+                    previous_input: previousInput
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const newOutput = data.output?.slice(outputDiv.textContent.length) || '';
+                    if (newOutput) appendOutput(newOutput);
+                    previousInput = data.previous_input || '';
+
+                    if (data.status === 'error') {
+                        appendOutput(`\n${data.error}\n`, 'error-text');
+                        if (data.traceback) appendOutput(`${data.traceback}\n`, 'error-text');
+                        isWaitingForInput = false;
+                        inputArea.style.display = 'none';
+                    }
+
+                    if (data.status === 'waiting' || data.waiting_for_input) {
+                        isWaitingForInput = true;
+                        inputArea.style.display = 'flex';
+                        userInput.focus();
+                    } else {
+                        isWaitingForInput = false;
+                        inputArea.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    appendOutput(`\nError processing input: ${error.message}\n`, 'error-text');
+                    isWaitingForInput = false;
+                    inputArea.style.display = 'none';
+                });
+        }
+
+        // function appendOutput(text, className = '') {
+        //     const span = document.createElement('span');
+        //     span.textContent = text;
+        //     if (className) span.className = className;
+        //     span.classList.add('fade-in');
+        //     outputDiv.appendChild(span);
+        //     outputDiv.scrollTop = outputDiv.scrollHeight;
+        // }
+
+        function appendOutput(text, className = '') {
+            const lines = text.split('\n');
+            lines.forEach((line) => {
+                const div = document.createElement('div');
+                div.textContent = line;
+                if (className) {
+                    div.classList.add(className);
+                }
+                div.classList.add('fade-in');
+                outputDiv.appendChild(div);
+            });
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+        }
+
+    });
+</script>
+
+<!-- <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize CodeMirror
+            const codeEditor = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
+                mode: 'python',
+                theme: 'dracula',
+                lineNumbers: true,
+                tabSize: 4,
+                indentUnit: 4,
+                indentWithTabs: false,
+                smartIndent: true,
+                autofocus: true,
+                extraKeys: {
+                    "Tab": function(cm) {
+                        if (cm.somethingSelected()) {
+                            cm.indentSelection("add");
+                        } else {
+                            cm.replaceSelection("    ", "end", "+input");
+                        }
+                    }
+                }
+            });
+
+            const runBtn = document.getElementById('run-btn');
+            const clearBtn = document.getElementById('clear-btn');
+            // const saveBtn = document.getElementById('save-btn');
+            // const snippetsSelect = document.getElementById('snippets-select');
+            const outputDiv = document.getElementById('output');
+            const inputArea = document.getElementById('input-area');
+            const userInput = document.getElementById('user-input');
+            // const saveModal = new bootstrap.Modal(document.getElementById('save-modal'));
+            // const confirmSaveBtn = document.getElementById('confirm-save');
+            // const snippetTitleInput = document.getElementById('snippet-title');
+
+            let isWaitingForInput = false;
+            let previousInput = '';
+            let currentCode = '';
+
+            // Event Handlers
+            runBtn.addEventListener('click', () => {
+                executeCode();
+            });
+
+            clearBtn.addEventListener('click', () => {
+                outputDiv.innerHTML = '<span class="text-muted">// The output of your code will appear here...</span>';
+                inputArea.style.display = 'none';
+                isWaitingForInput = false;
+                previousInput = '';
+            });
+
+            // saveBtn.addEventListener('click', () => {
+            //     saveModal.show();
+            //     snippetTitleInput.focus();
+            // });
+
+            // confirmSaveBtn.addEventListener('click', () => {
+            //     const title = snippetTitleInput.value.trim() || 'Untitled';
+            //     saveCodeSnippet(title, codeEditor.getValue());
+            //     saveModal.hide();
+            //     snippetTitleInput.value = '';
+            // });
+
+            // snippetsSelect.addEventListener('change', () => {
+            //     const snippetId = snippetsSelect.value;
+            //     if (snippetId) {
+            //         loadCodeSnippet(snippetId);
+            //     }
+            // });
+
+            userInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && isWaitingForInput) {
+                    e.preventDefault();
+                    const input = userInput.value;
+                    appendOutput(`${input}\n`);
+                    userInput.value = '';
+                    continueExecution(input);
+                }
+            });
+
+            // Execute code function
+            function executeCode() {
+                currentCode = codeEditor.getValue();
+                outputDiv.innerHTML = '';
+                inputArea.style.display = 'none';
+                isWaitingForInput = false;
+                previousInput = '';
+                
+                fetch('/api/execute', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        code: currentCode,
+                        input: ''
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.output) {
+                        appendOutput(data.output);
+                    }
+                    
+                    if (data.status === 'error') {
+                        appendOutput(`\n${data.error}\n`, 'error-text');
+                        if (data.traceback) {
+                            appendOutput(`${data.traceback}\n`, 'error-text');
+                        }
+                    }
+                    
+                    if (data.status === 'waiting' || data.waiting_for_input) {
+                        isWaitingForInput = true;
+                        inputArea.style.display = 'flex';
+                        userInput.focus();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error executing code:', error);
+                    appendOutput(`Error executing code: ${error.message}`, 'error-text');
+                });
+            }
+
+            // Continue execution after input
+            function continueExecution(input) {
+                fetch('/api/continue_execution', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        code: currentCode,
+                        input: input,
+                        previous_input: previousInput
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Just append the new output rather than trying to replace parts
+                    if (data.output) {
+                        // Find what's new in the output and show only that
+                        const newOutput = data.output.slice(outputDiv.textContent.length);
+                        if (newOutput) {
+                            appendOutput(newOutput);
+                        }
+                    }
+                    
+                    previousInput = data.previous_input || '';
+                    
+                    if (data.status === 'error') {
+                        appendOutput(`\n${data.error}\n`, 'error-text');
+                        if (data.traceback) {
+                            appendOutput(`${data.traceback}\n`, 'error-text');
+                        }
+                        isWaitingForInput = false;
+                        inputArea.style.display = 'none';
+                    }
+                    
+                    if (data.status === 'waiting' || data.waiting_for_input) {
+                        isWaitingForInput = true;
+                        inputArea.style.display = 'flex';
+                        userInput.focus();
+                    } else {
+                        isWaitingForInput = false;
+                        inputArea.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error processing input:', error);
+                    appendOutput(`\nError processing input: ${error.message}\n`, 'error-text');
+                    isWaitingForInput = false;
+                    inputArea.style.display = 'none';
+                });
+            }
+
+            // Append text to output area
+            function appendOutput(text, className = '') {
+                const span = document.createElement('span');
+                span.textContent = text;
+                if (className) {
+                    span.className = className;
+                }
+                span.classList.add('fade-in');
+                outputDiv.appendChild(span);
+                outputDiv.scrollTop = outputDiv.scrollHeight;
+            }
+
+            // Save code snippet
+            // function saveCodeSnippet(title, code) {
+            //     fetch('/api/save_snippet', {
+            //         method: 'POST',
+            //         headers: {
+            //             'Content-Type': 'application/json'
+            //         },
+            //         body: JSON.stringify({
+            //             title: title,
+            //             code: code
+            //         })
+            //     })
+            //     .then(response => response.json())
+            //     .then(data => {
+            //         if (data.status === 'success') {
+            //             appendOutput(`\n// Snippet "${title}" saved successfully.\n`, 'success-text');
+            //             loadSnippets();
+            //         } else {
+            //             appendOutput(`\n// Error saving snippet: ${data.message}\n`, 'error-text');
+            //         }
+            //     })
+            //     .catch(error => {
+            //         appendOutput(`\n// Error saving snippet: ${error}\n`, 'error-text');
+            //     });
+            // }
+
+            // // Load snippets list
+            // function loadSnippets() {
+            //     fetch('/api/load_snippets')
+            //     .then(response => response.json())
+            //     .then(data => {
+            //         // Clear existing options except the default one
+            //         while(snippetsSelect.options.length > 1) {
+            //             snippetsSelect.remove(1);
+            //         }
+                    
+            //         if (data.status === 'success') {
+            //             data.snippets.forEach(snippet => {
+            //                 const option = document.createElement('option');
+            //                 option.value = snippet.id;
+            //                 option.textContent = snippet.title;
+            //                 snippetsSelect.appendChild(option);
+            //             });
+            //         } else {
+            //             console.log(data.message);
+            //         }
+            //     })
+            //     .catch(error => {
+            //         console.error('Error loading snippets:', error);
+            //     });
+            // }
+
+            // // Load a specific code snippet
+            // function loadCodeSnippet(snippetId) {
+            //     fetch(`/api/load_snippet/${snippetId}`)
+            //     .then(response => response.json())
+            //     .then(data => {
+            //         if (data.status === 'success') {
+            //             codeEditor.setValue(data.code);
+            //             appendOutput(`\n// Loaded snippet "${data.title}"\n`, 'success-text');
+            //             // Reset the select to default option
+            //             snippetsSelect.selectedIndex = 0;
+            //         } else {
+            //             appendOutput(`\n// Error loading snippet: ${data.message}\n`, 'error-text');
+            //         }
+            //     })
+            //     .catch(error => {
+            //         appendOutput(`\n// Error loading snippet: ${error}\n`, 'error-text');
+            //     });
+            // }
+
+            // // Load existing snippets on page load
+            // loadSnippets();
+        });
+    </script> -->
 {% endblock %}

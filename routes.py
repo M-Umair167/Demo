@@ -1,12 +1,116 @@
-from flask import render_template, request, redirect, session
+from flask import render_template, request, redirect, session,jsonify
 from app import app, db, mail
 from models import User, Contact
 from flask_mail import Message
+import contextlib
+import traceback
+import io
 import re
 
 
 def create_tables():
     db.create_all()
+
+
+# A simpler approach to handling input in code execution
+class CodeExecutor:
+    def __init__(self):
+        self.inputs = []
+        self.input_index = 0
+        self.input_requested = False
+        self.output_buffer = io.StringIO()
+        self.execution_interrupted = False
+    
+    def reset(self, inputs=None):
+        self.inputs = inputs or []
+        self.input_index = 0
+        self.input_requested = False
+        self.execution_interrupted = False
+        self.output_buffer = io.StringIO()
+    
+    def custom_input(self, prompt=''):
+        # Print the prompt to the output
+        print(prompt, end='')
+        
+        # Check if we have inputs available
+        if self.input_index < len(self.inputs):
+            user_input = self.inputs[self.input_index]
+            self.input_index += 1
+            print(user_input)  # Echo the input
+            return user_input
+        
+        # No more inputs available, mark as waiting and raise exception to halt execution
+        self.input_requested = True
+        self.execution_interrupted = True
+        
+        # Raise a custom exception to interrupt the execution
+        raise InterruptedError("Waiting for user input")
+    
+    def execute(self, code, inputs=None):
+        self.reset(inputs)
+        
+        # Create a clean environment with minimal globals
+        # Using a copy of __builtins__ is safer
+        import builtins
+        safe_builtins = dict(builtins.__dict__)
+        
+        # Remove potentially unsafe functions but keep import capability
+        for func in ['input', 'open']:
+            if func in safe_builtins:
+                del safe_builtins[func]
+        
+        # Set up the globals dictionary
+        globals_dict = {'__builtins__': safe_builtins}
+        
+        # Add the safe input function
+        globals_dict['__builtins__']['input'] = self.custom_input
+        
+        # Pre-import commonly used modules to make them available
+        import math, random, datetime, json, re, collections, itertools, functools
+        globals_dict.update({
+            'math': math,
+            'random': random,
+            'datetime': datetime,
+            'json': json,
+            're': re,
+            'collections': collections,
+            'itertools': itertools,
+            'functools': functools
+        })
+        
+        with contextlib.redirect_stdout(self.output_buffer), contextlib.redirect_stderr(self.output_buffer):
+            try:
+                # Execute with a timeout in case of infinite loops
+                exec(code, globals_dict)
+                
+                # Return results
+                return {
+                    'status': 'success',
+                    'output': self.output_buffer.getvalue(),
+                    'waiting_for_input': False
+                }
+            except InterruptedError:
+                # This is expected when waiting for input
+                return {
+                    'status': 'waiting',
+                    'output': self.output_buffer.getvalue(),
+                    'waiting_for_input': True
+                }
+            except Exception as e:
+                # Get the full traceback for other errors
+                error_traceback = traceback.format_exc()
+                return {
+                    'status': 'error',
+                    'output': self.output_buffer.getvalue(),
+                    'error': str(e),
+                    'traceback': error_traceback,
+                    'waiting_for_input': False
+                }
+
+# Global code executor
+code_executor = CodeExecutor()
+
+
 
 # preview page 
 @app.route('/')
@@ -161,6 +265,42 @@ def chatbot_html():
 @app.route('/compiler.html')
 def compiler_html():
     return render_template('compiler.html')
+
+@app.route('/api/execute', methods=['POST'])
+def execute_code():
+    data = request.json
+    code = data.get('code', '')
+    input_data = data.get('input', '')
+    
+    # Parse inputs if provided
+    inputs = input_data.split('\n') if input_data else []
+    
+    # Execute the code with the provided inputs
+    result = code_executor.execute(code, inputs)
+    
+    return jsonify(result)
+
+@app.route('/api/continue_execution', methods=['POST'])
+def continue_execution():
+    data = request.json
+    code = data.get('code', '')
+    input_data = data.get('input', '')
+    previous_input = data.get('previous_input', '')
+    
+    # Combine previous input with new input
+    combined_input = previous_input + '\n' + input_data if previous_input else input_data
+    
+    # Parse all inputs
+    inputs = combined_input.split('\n') if combined_input else []
+    
+    # Execute with the combined inputs
+    result = code_executor.execute(code, inputs)
+    
+    # Add the combined input to the result for future executions
+    result['previous_input'] = combined_input
+    
+    return jsonify(result)
+
 
 # to log out
 @app.route('/logout')

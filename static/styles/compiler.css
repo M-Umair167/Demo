@@ -102,7 +102,7 @@
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: flex-start;
   }
   
   .output-content {
@@ -127,6 +127,21 @@
     color: #ff5555;
   }
   
+  .input-container input {
+    flex-grow: 1;
+    background-color: #363743;
+    border: none;
+    color: #f8f8f2;
+    padding: 0.5rem;
+    border-radius: 8px;
+    margin: 0.5rem;
+  }
+
+  .input-container input:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(80, 250, 123, 0.5);
+}
+
   /* Compiler Features */
   .compiler-features {
     padding: 50px 0;
