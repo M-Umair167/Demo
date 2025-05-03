@@ -1,99 +1,161 @@
-document.addEventListener("DOMContentLoaded", () => {
-    // Initialize CodeMirror if it exists
-    if (typeof CodeMirror !== "undefined") {
-        const editor = CodeMirror(document.getElementById("editor"), {
-            mode: "python",
-            theme: "dracula",
-            lineNumbers: true,
-            indentUnit: 4,
-            tabSize: 4,
-            indentWithTabs: false,
-            smartIndent: true,
-            lineWrapping: true,
-            gutters: ["CodeMirror-linenumbers"],
-            autoCloseBrackets: true,
-            matchBrackets: true,
-            extraKeys: {
-                Tab: (cm) => {
-                    cm.replaceSelection("    ", "end")
-                },
-            },
-        });
-
-        // Set default code
-        editor.setValue(`print("Hello, World")`);
-
-        // Run button functionality
-        const runBtn = document.getElementById("run-btn");
-        const output = document.querySelector(".output-content");
-        const executionStatus = document.querySelector(".execution-status");
-
-        if (runBtn) {
-            runBtn.addEventListener("click", async () => {
-                const code = editor.getValue();
-
-                // Clear previous output
-                output.textContent = "";
-                executionStatus.textContent = "Running...";
-
-                try {
-                    // Run code using Piston API
-                    const response = await fetch("https://emkc.org/api/v2/piston/execute", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ language: "python", version: "3.10.0", files: [{ content: code }] })
-                    });
-                    const result = await response.json();
-
-                    if (result.run.output) {
-                        output.textContent = result.run.output;
-                        executionStatus.textContent = "=== Code Execution Successful";
-                        executionStatus.className = "execution-status success";
-                    } else {
-                        output.textContent = "No output generated";
-                        executionStatus.textContent = "=== Code Execution Failed";
-                        executionStatus.className = "execution-status error";
-                    }
-                } catch (error) {
-                    output.textContent = "Error running code";
-                    executionStatus.textContent = "=== Code Execution Failed";
-                    executionStatus.className = "execution-status error";
+document.addEventListener('DOMContentLoaded', function () {
+    const codeEditor = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
+        mode: 'python',
+        theme: 'dracula',
+        lineNumbers: true,
+        tabSize: 4,
+        indentUnit: 4,
+        indentWithTabs: false,
+        smartIndent: true,
+        autofocus: true,
+        extraKeys: {
+            "Tab": function (cm) {
+                if (cm.somethingSelected()) {
+                    cm.indentSelection("add");
+                } else {
+                    cm.replaceSelection("    ", "end", "+input");
                 }
+            }
+        }
+    });
+
+    const runBtn = document.getElementById('run-btn');
+    const clearBtn = document.getElementById('clear-output');
+    const outputDiv = document.getElementById('output');
+    const inputArea = document.getElementById('input-area');
+    const userInput = document.getElementById('user-input');
+
+    let isWaitingForInput = false;
+    let previousInput = '';
+    let currentCode = '';
+
+    runBtn.addEventListener('click', () => {
+        executeCode();
+    });
+
+    clearBtn.addEventListener('click', () => {
+        outputDiv.innerHTML = '<span class="text-muted">// The output of your code will appear here...</span>';
+        inputArea.style.display = 'none';
+        isWaitingForInput = false;
+        previousInput = '';
+    });
+
+    userInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && isWaitingForInput) {
+            e.preventDefault();
+            const input = userInput.value;
+            const previousOutput = outputDiv.querySelector('div:last-child');
+
+            if (previousOutput && previousOutput.textContent.trim().endsWith('?')) {
+                previousOutput.textContent += ' ' + input;
+            } else {
+                appendOutput(input + '\n');
+            }
+
+
+            userInput.value = '';
+            continueExecution(input);
+        }
+    });
+
+    function executeCode() {
+        currentCode = codeEditor.getValue();
+        outputDiv.innerHTML = '';
+        inputArea.style.display = 'none';
+        isWaitingForInput = false;
+        previousInput = '';
+
+        fetch('/api/execute', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: currentCode, input: '' })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.output) appendOutput(data.output);
+                if (data.status === 'error') {
+                    appendOutput(`\n${data.error}\n`, 'error-text');
+                    if (data.traceback) appendOutput(`${data.traceback}\n`, 'error-text');
+                }
+
+                if (data.status === 'waiting' || data.waiting_for_input) {
+                    isWaitingForInput = true;
+                    inputArea.style.display = 'flex';
+                    userInput.focus();
+                } else {
+                    isWaitingForInput = false;
+                    inputArea.style.display = 'none';
+
+                    // ✅ Add this
+                    const successDiv = document.createElement('div');
+                    successDiv.className = 'execution-status success';
+                    successDiv.textContent = '=== Code Execution Successful';
+                    outputDiv.appendChild(successDiv);
+                }
+            })
+
+            .catch(error => {
+                appendOutput(`Error executing code: ${error.message}`, 'error-text');
             });
-        }
+    }
 
-        // Clear output button
-        const clearOutputBtn = document.getElementById("clear-output");
+    function continueExecution(input) {
+        fetch('/api/continue_execution', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                code: currentCode,
+                input: input,
+                previous_input: previousInput
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                const newOutput = data.output?.slice(outputDiv.textContent.length) || '';
+                if (newOutput) appendOutput(newOutput);
+                previousInput = data.previous_input || '';
 
-        if (clearOutputBtn) {
-            clearOutputBtn.addEventListener("click", () => {
-                output.textContent = "";
-                executionStatus.textContent = "";
+                if (data.status === 'error') {
+                    appendOutput(`\n${data.error}\n`, 'error-text');
+                    if (data.traceback) appendOutput(`${data.traceback}\n`, 'error-text');
+                    isWaitingForInput = false;
+                    inputArea.style.display = 'none';
+                }
+
+                if (data.status === 'waiting' || data.waiting_for_input) {
+                    isWaitingForInput = true;
+                    inputArea.style.display = 'flex';
+                    userInput.focus();
+                } else {
+                    isWaitingForInput = false;
+                    inputArea.style.display = 'none';
+
+                    const successDiv = document.createElement('div');
+                    successDiv.className = 'execution-status success';
+                    successDiv.textContent = '=== Code Execution Successful';
+                    outputDiv.appendChild(successDiv);
+                }
+            })
+            .catch(error => {
+                appendOutput(`\nError processing input: ${error.message}\n`, 'error-text');
+                isWaitingForInput = false;
+                inputArea.style.display = 'none';
             });
-        }
-    } else {
-        // Fallback if CodeMirror is not loaded
-        const editorElement = document.getElementById("editor");
-        if (editorElement) {
-            editorElement.innerHTML =
-                '<textarea class="fallback-editor" rows="10" cols="100">def greet():\n    return "Hi!"\n\nprint(greet())</textarea>';
+    }
 
-            // Add some basic styling
-            const style = document.createElement("style");
-            style.textContent = `
-              .fallback-editor {
-                width: 100%;
-                height: 100%;
-                background-color: #282a36;
-                color: #f8f8f2;
-                border: none;
-                padding: 10px;
-                font-family: monospace;
-                resize: none;
-              }
-            `;
-            document.head.appendChild(style);
-        }
+
+    function appendOutput(text, className = '') {
+        const lines = text.split('\n');
+        lines.forEach((line) => {
+            const div = document.createElement('div');
+            div.textContent = line;
+            if (className) {
+                div.classList.add(className);
+            }
+            div.classList.add('fade-in');
+            outputDiv.appendChild(div);
+        });
+        outputDiv.scrollTop = outputDiv.scrollHeight;
     }
 
     // Ask AI button
