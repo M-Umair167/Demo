@@ -158,12 +158,4 @@ document.addEventListener('DOMContentLoaded', function () {
         outputDiv.scrollTop = outputDiv.scrollHeight;
     }
 
-    // Ask AI button
-    const askAiBtn = document.getElementById("ask-ai-btn");
-
-    if (askAiBtn) {
-        askAiBtn.addEventListener("click", () => {
-            window.location.href = "chatbot.html";
-        });
-    }
 });
