@@ -110,129 +110,12 @@ print("\nThanks for using our interactive compiler!")</textarea>
         <div class="message ai">Hi! How can I help you with your code today?</div>
     </div>
     <div class="chat-input">
-        <!-- <textarea id="user-input" placeholder="Type your message..." rows="1"></textarea> -->
         <textarea id="ai-user-input" placeholder="Type your message..."></textarea>
     </div>
     <button id="send-btn">Send</button>
 </div>
 
 
-<style>
-    .ai-chat-popup {
-        position: fixed;
-        right: 20px;
-        bottom: 20px;
-        height: 500px;
-        background: #1e293b;
-        border-radius: 15px;
-        display: flex;
-        flex-direction: column;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        z-index: 9999;
-        transition: transform 0.3s ease;
-    }
-
-    .ai-chat-popup.hidden {
-        transform: translateX(110%);
-    }
-
-
-    .chat-header {
-        background: #0ea5e9;
-        color: white;
-        padding: 10px;
-        font-weight: bold;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-radius: 10px 10px 0 0;
-    }
-
-    .chat-body {
-        background-color: #1e293b;
-        flex: 1;
-        overflow-y: auto;
-        padding: 10px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        font-size: 0.9rem;
-    }
-
-
-
-    .chat-input {
-        display: flex;
-        padding: 12px 12px;
-        flex-shrink: 0;
-
-    }
-
-    .chat-input input {
-        background: #0f172a;
-        color: #fff;
-        flex: 1;
-        padding: 8px;
-        border: none;
-        border-radius: 0 0 0 10px;
-    }
-
-    .chat-input textarea {
-        background: #0f172a;
-        color: #fff;
-        flex: 1;
-        padding: 8px;
-        border: none;
-        border-radius: 0 0 0 10px;
-        resize: none;
-        line-height: 1.5;
-        font-family: inherit;
-        overflow-y: auto;
-        max-height: 120px;
-        min-height: 32px;
-    }
-
-
-
-    .ai-chat-popup button {
-        padding: 8px 12px;
-        background: #0ea5e9;
-        color: white;
-        border: none;
-        border-radius: 0 0 10px 10px;
-        cursor: pointer;
-    }
-
-    .message.ai {
-        background: #334155;
-        margin-bottom: 10px;
-        padding: 6px 10px;
-        border-radius: 8px;
-        white-space: pre-wrap;
-
-    }
-
-    .message.user {
-        background: #1e40af;
-        color: #fff;
-        padding: 6px 10px;
-        border-radius: 10px;
-        max-width: 80%;
-
-        width: fit-content;
-        align-self: flex-end;
-        margin-left: auto;
-        white-space: pre-wrap;
-    }
-
-    .toggle-btn {
-        background: none;
-        border: none;
-        color: white;
-        font-size: 1rem;
-        cursor: pointer;
-    }
-</style>
 
 <!-- compiler scripts -->
 <script src="{{ url_for('static', filename='js/compiler.js') }}"></script>
@@ -242,8 +125,133 @@ print("\nThanks for using our interactive compiler!")</textarea>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
 
 
-<!-- ai pop up script  -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/lib/core.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/highlight.js/lib/common.min.js"></script>
+<script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
+
+
+
 <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const chatMessages = document.getElementById("chat-body");
+        const userInput = document.getElementById("ai-user-input");
+        const sendBtn = document.getElementById("send-btn");
+        const welcomeMessage = document.getElementById('welcomeMessage');
+
+        // Handle AI chat popup if present
+        const aiChatPopup = document.getElementById("ai-chat-popup");
+        const askAiBtn = document.getElementById("ask-ai-btn");
+        const toggleChat = document.getElementById("toggle-chat");
+
+        if (askAiBtn && aiChatPopup) {
+            askAiBtn.addEventListener("click", () => {
+                aiChatPopup.classList.remove("hidden");
+            });
+        }
+
+        if (toggleChat && aiChatPopup) {
+            toggleChat.addEventListener("click", () => {
+                aiChatPopup.classList.add("hidden");
+            });
+        }
+
+        // Auto-resize textarea
+        userInput.addEventListener("input", function () {
+            this.style.height = "auto";
+            this.style.height = Math.min(this.scrollHeight, 120) + "px";
+        });
+
+        // Handle Enter key (Shift+Enter for newline)
+        userInput.addEventListener("keydown", function (e) {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+            }
+        });
+
+        sendBtn.addEventListener("click", handleSend);
+
+        function handleSend() {
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            // Add user message to chat
+            addMessage("user", message);
+            userInput.value = "";
+            userInput.style.height = "auto";
+
+            if (welcomeMessage) welcomeMessage.style.display = "none";
+
+            // Show loading message
+            const loadingDiv = document.createElement("div");
+            loadingDiv.className = "message assistant-message";
+            loadingDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Thinking...';
+            chatMessages.appendChild(loadingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            const isGenerationRequest = shouldGenerateCode(message);
+            const apiUrl = isGenerationRequest ? "/api/generate" : "/api/assist";
+            const requestData = isGenerationRequest ? { description: message } : { query: message };
+
+            fetch(apiUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(requestData)
+            })
+                .then(res => res.json())
+                .then(data => {
+                    chatMessages.removeChild(loadingDiv);
+                    if (data.error) {
+                        addMessage("assistant", data.error, true);
+                    } else {
+                        const content = isGenerationRequest ? data.code : data.response;
+                        const isError = content.toLowerCase().includes("failed");
+                        const isCode = isGenerationRequest && !isError;
+                        addMessage("assistant", content, isError, isCode);
+                    }
+                })
+                .catch(err => {
+                    chatMessages.removeChild(loadingDiv);
+                    addMessage("assistant", "Failed to get response: " + err.message, true);
+                });
+        }
+
+        function shouldGenerateCode(message) {
+            const lowerMsg = message.toLowerCase();
+            const generationKeywords = ['generate', 'create', 'write', 'make', 'code for', 'implement'];
+            const assistanceKeywords = ['explain', 'debug', 'fix', 'correct', 'error', 'issue', 'what is', 'how does', 'improve', 'refactor'];
+            const looksLikeCode = /(def|class|import|for|while|if|else|try|except|return|print)/.test(message);
+
+            return generationKeywords.some(kw => lowerMsg.includes(kw)) &&
+                !assistanceKeywords.some(kw => lowerMsg.includes(kw)) &&
+                !looksLikeCode;
+        }
+
+        function addMessage(role, content, isError = false, isCode = false) {
+            const messageDiv = document.createElement("div");
+            messageDiv.className = `message ${role}-message${isError ? " error-message" : ""}`;
+
+            if (isCode) {
+                const codeBlock = document.createElement("pre");
+                codeBlock.className = "code-block";
+                codeBlock.textContent = content;
+                messageDiv.appendChild(codeBlock);
+            } else {
+                messageDiv.innerHTML = marked.parse(content);
+                const codeBlocks = messageDiv.querySelectorAll("pre code");
+                codeBlocks.forEach(block => hljs.highlightElement(block));
+            }
+
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    });
+</script>
+
+<!-- ai pop up script  -->
+<!-- <script>
     const input = document.getElementById("ai-user-input");
     const chatBody = document.getElementById("chat-body");
     const sendBtn = document.getElementById("send-btn");
@@ -288,6 +296,6 @@ print("\nThanks for using our interactive compiler!")</textarea>
     document.getElementById("toggle-chat").addEventListener("click", () => {
         document.getElementById("ai-chat-popup").classList.add("hidden");
     });
-</script>
+</script> -->
 
 {% endblock %}

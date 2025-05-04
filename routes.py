@@ -1,6 +1,8 @@
 from flask import render_template, request, redirect, session,jsonify
 from app import app, db, mail
 from models import User, Contact
+from services import generate_python_code, python_assistance
+import logging
 from flask_mail import Message
 import contextlib
 import traceback
@@ -11,6 +13,10 @@ import re
 def create_tables():
     db.create_all()
 
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # A simpler approach to handling input in code execution
 class CodeExecutor:
@@ -259,6 +265,35 @@ def tutorials_html():
 @app.route('/chatbot.html')
 def chatbot_html():
     return render_template('chatbot.html')
+
+@app.route('/api/generate', methods=['POST'])
+def handle_generate():
+    try:
+        data = request.json
+        description = data.get('description', '')
+        if not description:
+            return jsonify({'error': 'Description is required'}), 400
+        
+        result = generate_python_code(description)
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Error in generate: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/assist', methods=['POST'])
+def handle_assist():
+    try:
+        data = request.json
+        query = data.get('query', '')
+        if not query:
+            return jsonify({'error': 'Query is required'}), 400
+        
+        result = python_assistance(query)
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Error in assist: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 
 
 # compiler page
