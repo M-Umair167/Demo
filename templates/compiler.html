@@ -107,14 +107,13 @@ print("\nThanks for using our interactive compiler!")</textarea>
         <button id="toggle-chat" class="toggle-btn">⮜</button>
     </div>
     <div class="chat-body" id="chat-body">
-        <div class="message ai">Hi! How can I help you with your code today?</div>
+        <div class="message assistant">Hi! How can I help you with your code today?</div>
     </div>
     <div class="chat-input">
         <textarea id="ai-user-input" placeholder="Type your message..."></textarea>
     </div>
     <button id="send-btn">Send</button>
 </div>
-
 
 
 <!-- compiler scripts -->
@@ -132,7 +131,7 @@ print("\nThanks for using our interactive compiler!")</textarea>
 <script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
 
 
-
+<!-- ai pop up and assistant  -->
 <script>
     document.addEventListener("DOMContentLoaded", () => {
         const chatMessages = document.getElementById("chat-body");
@@ -231,7 +230,8 @@ print("\nThanks for using our interactive compiler!")</textarea>
 
         function addMessage(role, content, isError = false, isCode = false) {
             const messageDiv = document.createElement("div");
-            messageDiv.className = `message ${role}-message${isError ? " error-message" : ""}`;
+            messageDiv.className = `message ${role}${isError ? " error-message" : ""}`;
+
 
             if (isCode) {
                 const codeBlock = document.createElement("pre");
@@ -250,52 +250,6 @@ print("\nThanks for using our interactive compiler!")</textarea>
     });
 </script>
 
-<!-- ai pop up script  -->
-<!-- <script>
-    const input = document.getElementById("ai-user-input");
-    const chatBody = document.getElementById("chat-body");
-    const sendBtn = document.getElementById("send-btn");
 
-    function sendMessage() {
-        const message = input.value.trim();
-        if (message === "") return;
-
-        const userMessage = `<div class="message user">${message}</div>`;
-        chatBody.innerHTML += userMessage;
-
-        // Mock AI reply
-        const aiReply = `<div class="message ai">Thanks! Let me think about that...</div>`;
-        chatBody.innerHTML += aiReply;
-
-        input.value = "";
-        input.style.height = "auto";  // Reset height after sending
-        chatBody.scrollTop = chatBody.scrollHeight;
-    }
-
-    // ✅ Combined Enter/Shift+Enter logic
-    input.addEventListener("keydown", function (e) {
-        if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();  // prevent newline
-            sendMessage();       // send message
-        }
-        // Else: allow newline with Shift+Enter
-    });
-
-    // ✅ Dynamic height and scroll when typing
-    input.addEventListener("input", function () {
-        this.style.height = "auto";
-        this.style.height = Math.min(this.scrollHeight, 120) + "px";
-    });
-
-    document.getElementById("send-btn").addEventListener("click", sendMessage);
-
-    document.getElementById("ask-ai-btn").addEventListener("click", () => {
-        document.getElementById("ai-chat-popup").classList.remove("hidden");
-    });
-
-    document.getElementById("toggle-chat").addEventListener("click", () => {
-        document.getElementById("ai-chat-popup").classList.add("hidden");
-    });
-</script> -->
 
 {% endblock %}

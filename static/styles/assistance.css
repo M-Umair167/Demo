@@ -1,0 +1,117 @@
+    /* ai pop up css */
+
+    .ai-chat-popup {
+        position: fixed;
+        right: 20px;
+        bottom: 20px;
+        height: 500px;
+        background: #1e293b;
+        border-radius: 15px;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        z-index: 9999;
+        transition: transform 0.3s ease;
+    }
+
+    .ai-chat-popup.hidden {
+        transform: translateX(110%);
+    }
+
+
+    .chat-header {
+        background: #0ea5e9;
+        color: white;
+        padding: 10px;
+        font-weight: bold;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-radius: 10px 10px 0 0;
+    }
+
+    .chat-body {
+        background-color: #1e293b;
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        font-size: 0.9rem;
+    }
+
+
+
+    .chat-input {
+        display: flex;
+        padding: 12px 12px;
+        flex-shrink: 0;
+
+    }
+
+    .chat-input input {
+        background: #0f172a;
+        color: #fff;
+        flex: 1;
+        padding: 8px;
+        border: none;
+        border-radius: 0 0 0 10px;
+    }
+
+    .chat-input textarea {
+        background: #0f172a;
+        color: #fff;
+        flex: 1;
+        padding: 8px;
+        border: none;
+        border-radius: 0 0 0 10px;
+        resize: none;
+        line-height: 1.5;
+        font-family: inherit;
+        overflow-y: auto;
+        max-height: 120px;
+        min-height: 32px;
+    }
+
+
+
+    .ai-chat-popup button {
+        padding: 8px 12px;
+        background: #0ea5e9;
+        color: white;
+        border: none;
+        border-radius: 0 0 10px 10px;
+        cursor: pointer;
+    }
+
+    .message.assistant {
+        background: #334155;
+        margin-bottom: 10px;
+        padding: 6px 10px;
+        border-radius: 8px;
+        white-space: pre-wrap;
+
+    }
+
+    .message.user {
+        inline-size: fit-content;
+        background: #1e3c5d;
+        color: #fff;
+        padding: 6px 10px;
+        border-radius: 10px;
+        max-width: 80%;
+        
+        width: fit-content;
+        align-self: flex-end;
+        margin-left: auto;
+        white-space: pre-wrap;
+    }
+
+    .toggle-btn {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1rem;
+        cursor: pointer;
+    }

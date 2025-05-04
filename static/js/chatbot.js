@@ -2,7 +2,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const chatMessages = document.getElementById("chat-messages")
   const userInput = document.getElementById("user-input")
   const sendBtn = document.getElementById("send-btn")
-  // const suggestionChips = document.querySelectorAll(".suggestion-chip")
   const welcomeMessage = document.getElementById('welcomeMessage');
 
 
@@ -100,37 +99,27 @@ document.addEventListener("DOMContentLoaded", () => {
   function addMessage(role, content, isError = false, isCode = false) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${role}-message${isError ? ' error-message' : ''}`;
-
+  
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content';
+  
     if (isCode) {
       const codeBlock = document.createElement('pre');
       codeBlock.className = 'code-block';
       codeBlock.textContent = content;
-      messageDiv.appendChild(codeBlock);
+      contentDiv.appendChild(codeBlock);
     } else {
-      // Use marked.js to render markdown (for assistance responses)
-      messageDiv.innerHTML = marked.parse(content);
-
-      // Highlight code blocks in assistance responses
-      if (!isCode) {
-        const codeBlocks = messageDiv.querySelectorAll('pre code');
-        codeBlocks.forEach(block => hljs.highlightElement(block));
-      }
-      
+      contentDiv.innerHTML = marked.parse(content);
+  
+      const codeBlocks = contentDiv.querySelectorAll('pre code');
+      codeBlocks.forEach(block => hljs.highlightElement(block));
     }
-
+  
+    messageDiv.appendChild(contentDiv);
     chatMessages.appendChild(messageDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }
+  
 
-  // Suggestion chips click event
-  // if (suggestionChips) {
-  //   suggestionChips.forEach((chip) => {
-  //     chip.addEventListener("click", function () {
-  //       const message = this.textContent
-  //       userInput.value = message
-  //       handleUserMessage()
-  //     })
-  //   })
-  // }
 })
 
