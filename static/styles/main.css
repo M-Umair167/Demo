@@ -296,11 +296,6 @@ footer {
   .header-container {
     flex-direction: column;
   }
-/* @media (min-width: 769px) {
-  .header-container {
-      display: none;
-    }
-   */
 
   nav ul {
     margin-top: 20px;

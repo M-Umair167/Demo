@@ -33,20 +33,6 @@ document.addEventListener("DOMContentLoaded", () => {
         menuToggle.classList.toggle("active");
       });
     });
-    // const menuToggle = document.createElement("div")
-    // menuToggle.className = "menu-toggle"
-    // menuToggle.innerHTML = '<i class="fas fa-bars"></i>'
-  
-    // const header = document.querySelector("header")
-    // const nav = document.querySelector("nav")
-  
-    // if (header && nav) {
-    //   header.appendChild(menuToggle)
-  
-    //   menuToggle.addEventListener("click", () => {
-    //     nav.classList.toggle("active")
-    //     menuToggle.classList.toggle("active")
-    //   })
-    // }
+
   })
   
