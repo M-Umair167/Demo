@@ -20,10 +20,6 @@ login_manager.init_app(app)
 login_manager.login_view = 'login'
 
 from routes import *
-
-if __name__ == '__main__':
-import os
-
 if __name__ == "__main__":
     # Ensure the app context is active so db.create_all() works properly
     with app.app_context():
