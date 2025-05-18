@@ -22,7 +22,18 @@ login_manager.login_view = 'login'
 from routes import *
 
 if __name__ == '__main__':
+import os
+
+if __name__ == "__main__":
+    # Ensure the app context is active so db.create_all() works properly
     with app.app_context():
         db.create_all()
-        
-    app.run(debug=True)
+
+    # Determine port and host from environment (for platforms like Railway/Render)
+    port = int(os.environ.get("PORT", 5000))
+    host = "0.0.0.0"  # Listen on all interfaces for external access
+
+    # Use debug mode only if running locally (controlled by ENV variable)
+    debug_mode = os.environ.get("FLASK_DEBUG", "False").lower() == "true"
+
+    app.run(host=host, port=port, debug=debug_mode)
