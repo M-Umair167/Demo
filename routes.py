@@ -1,14 +1,19 @@
 from flask import render_template, request, redirect, session,jsonify
-from app import app, db, mail
-from models import User, Contact
-from services import generate_python_code, python_assistance
+from app import app, db, mail ,login_manager
+from models import User, Contact , ReadTopic
+from services import generate_python_response
 import logging
 from flask_mail import Message
 import contextlib
 import traceback
 import io
 import re
+from flask_login import login_user, login_required, current_user, logout_user
 
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 def create_tables():
     db.create_all()
@@ -120,8 +125,8 @@ code_executor = CodeExecutor()
 
 # preview page 
 @app.route('/')
-def preview():
-    return render_template('preview.html')
+def root():
+    return redirect('/index')
 
 
 # signup page 
@@ -152,6 +157,7 @@ def signup():
             db.session.commit()
         except Exception as e:
             db.session.rollback()
+            logger.error(f"Signup DB commit error: {str(e)}", exc_info=True)
             return render_template('signup.html', error="Internal Server Error. Please try again.")
 
         return redirect('/login')
@@ -174,13 +180,15 @@ def login():
             return render_template('login.html', error='All fields are required.')
 
         user = User.query.filter_by(email=email).first()
+         
         if not user:
             return render_template('login.html', error='Invalid user')
         elif not user.check_password(password):
             return render_template('login.html', error='Incorrect password')
-
-        session['email'] = user.email
-        return redirect('/index')
+        else:
+            login_user(user)
+            return redirect('/index')
+        
     return render_template('login.html')
 
 
@@ -258,42 +266,49 @@ def contact():
 # tutorials page 
 @app.route('/tutorials.html')
 def tutorials_html():
-    return render_template('tutorials.html')
+    return render_template('tutorials.html',user=current_user)
+
+
+@app.route('/mark-read', methods=['POST'])
+@login_required
+def mark_read():
+    data = request.get_json()
+    topic = data.get('topic')
+    if topic:
+        existing = ReadTopic.query.filter_by(
+            user_id=current_user.id, topic_name=topic).first()
+        if not existing:
+            db.session.add(
+                ReadTopic(user_id=current_user.id, topic_name=topic))
+            db.session.commit()
+    return '', 204
+
+@app.route('/unmark-read', methods=['POST'])
+@login_required
+def unmark_read():
+    data = request.get_json()
+    topic = data.get('topic')
+    if topic:
+        existing = ReadTopic.query.filter_by(
+            user_id=current_user.id, topic_name=topic).first()
+        if existing:
+            db.session.delete(existing)
+            db.session.commit()
+    return '', 204
+
+@app.route('/get-read-topics')
+@login_required
+def get_read_topics():
+    topics = ReadTopic.query.filter_by(user_id=current_user.id).all()
+    topic_list = [t.topic_name for t in topics]
+    return jsonify(topic_list)
+
 
 
 # chatbot page
 @app.route('/chatbot.html')
 def chatbot_html():
     return render_template('chatbot.html')
-
-@app.route('/api/generate', methods=['POST'])
-def handle_generate():
-    try:
-        data = request.json
-        description = data.get('description', '')
-        if not description:
-            return jsonify({'error': 'Description is required'}), 400
-        
-        result = generate_python_code(description)
-        return jsonify(result)
-    except Exception as e:
-        logger.error(f"Error in generate: {str(e)}")
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/assist', methods=['POST'])
-def handle_assist():
-    try:
-        data = request.json
-        query = data.get('query', '')
-        if not query:
-            return jsonify({'error': 'Query is required'}), 400
-        
-        result = python_assistance(query)
-        return jsonify(result)
-    except Exception as e:
-        logger.error(f"Error in assist: {str(e)}")
-        return jsonify({'error': str(e)}), 500
-
 
 
 # compiler page
@@ -337,8 +352,41 @@ def continue_execution():
     return jsonify(result)
 
 
+
 # to log out
 @app.route('/logout')
+@login_required
 def logout():
-    session.pop('email', None)
+    logout_user()
     return redirect('/index')
+
+
+# ai api request
+@app.route('/api/ask', methods=['POST'])
+def ask():
+    try:
+        data = request.get_json()
+        if not data or 'query' not in data:
+            return jsonify({"error": "Invalid request format"}), 400
+            
+        query = data['query'].strip()
+        if not query:
+            return jsonify({"error": "Empty query"}), 400
+        
+        # Get response from your AI function
+        response = generate_python_response(query)
+        
+        # Ensure consistent response format
+        if isinstance(response, str):
+            return jsonify({"answer": response})
+        elif isinstance(response, dict):
+            # Convert any 'response' key to 'answer' for consistency
+            if 'response' in response:
+                response['answer'] = response.pop('response')
+            return jsonify(response)
+        else:
+            return jsonify({"answer": str(response)})
+            
+    except Exception as e:
+        print(f"Error in /api/ask: {str(e)}")
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500

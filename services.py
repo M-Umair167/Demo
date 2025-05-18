@@ -1,72 +1,65 @@
 import os
-import requests
-from typing import Dict
-import logging
-from tenacity import retry, stop_after_attempt, wait_exponential
+import re
+import google.generativeai as genai
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
-# Together.ai configuration
-TOGETHER_API_KEY = os.getenv('TOGETHER_API_KEY')  # Get from https://together.ai
+# Set up the model
+model = genai.GenerativeModel('gemini-1.5-flash-latest')
 
-if not TOGETHER_API_KEY:
-    raise ValueError("TOGETHER_API_KEY is not set in environment variables.")
-
-TOGETHER_API_URL = "https://api.together.xyz/v1/chat/completions"
-TOGETHER_MODEL = "mistralai/Mistral-7B-Instruct-v0.1"  # Free model
-
-@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
-def get_ai_response(query: str, is_code: bool = False) -> str:
-    """Get response from Together.ai's API"""
-    try:
-        headers = {
-            "Authorization": f"Bearer {TOGETHER_API_KEY}",
-            "Content-Type": "application/json"
-        }
-        
-        # System prompt based on request type
-        system_prompt = (
-            "Generate ONLY raw Python code with no explanations." 
-            if is_code 
-            else "You are a helpful Python coding assistant."
-        )
-        
-        payload = {
-            "model": TOGETHER_MODEL,
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": query}
-            ],
-            "temperature": 0.5 if is_code else 0.7  # Lower temp for code generation
-        }
-        
-        response = requests.post(
-            TOGETHER_API_URL, 
-            json=payload, 
-            headers=headers,
-            timeout=30
-        )
-        response.raise_for_status()
-        return response.json()['choices'][0]['message']['content']
+def generate_python_response(query):
+    """Generate a response for Python programming questions using Gemini API"""
+    # Check if the query is asking for code
+    code_request = re.search(r'(code|example|script|program|function|class|implement|write) (for|of|to|that|a|an|the)', query.lower())
     
-    except requests.exceptions.RequestException as e:
-        logger.error(f"API request failed: {str(e)}")
-        return f"Error: Service unavailable ({str(e)})"
-    except KeyError:
-        logger.error("Invalid API response format")
-        return "Error: Invalid response from AI service"
-
-def python_assistance(query: str) -> Dict:
-    """Handle general Python assistance requests"""
-    response = get_ai_response(query, is_code=False)
-    return {'response': response}
-
-def generate_python_code(description: str) -> Dict:
-    """Handle code generation requests"""
-    response = get_ai_response(
-        f"Generate Python code for: {description}",
-        is_code=True
-    )
-    return {'code': response}
+    # Create a system prompt to guide Gemini's responses
+    system_prompt = """
+    You are a Python programming expert assistant. Provide clear, concise, and accurate answers to Python programming questions.
+    Focus on best practices and modern Python techniques.
+    
+    If the user is asking for code, include a well-commented, working code example that demonstrates the concept.
+    Format your response with a clear explanation followed by code examples when appropriate.
+    """
+    
+    # Add specific instructions if code is requested
+    if code_request:
+        system_prompt += """
+        Since the user is asking for code, make sure to include:
+        1. A complete, working code example
+        2. Clear comments explaining key parts
+        3. Example output if applicable
+        """
+    
+    try:
+        # Generate response from Gemini
+        response = model.generate_content([
+            system_prompt,
+            f"User question about Python: {query}"
+        ])
+        
+        # Process the response
+        answer_text = response.text
+        
+        # Extract code blocks if present (text between triple backticks)
+        code_pattern = r"\`\`\`python(.*?)\`\`\`"
+        code_matches = re.findall(code_pattern, answer_text, re.DOTALL)
+        
+        if code_matches:
+            # Get the first code block
+            code_example = code_matches[0].strip()
+            # Remove the code blocks from the explanation
+            explanation = re.sub(code_pattern, "", answer_text, flags=re.DOTALL).strip()
+        else:
+            explanation = answer_text
+            code_example = None
+        
+        return {
+            "answer": explanation,
+            "code": code_example
+        }
+    except Exception as e:
+        print(f"Error generating response: {e}")
+        return {
+            "answer": "I encountered an error while processing your question. Please try again or rephrase your question.",
+            "code": None
+        }

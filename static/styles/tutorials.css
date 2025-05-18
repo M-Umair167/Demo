@@ -197,4 +197,40 @@
     }
   }
   
-  
+  /* control button style  */
+.control_btn {
+  padding: 25px 0px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.control button {
+  background-color: transparent;
+  border: 1px solid var(--accent-color);
+  color: var(--accent-color);
+  padding: 8px 20px;
+  border-radius: 5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.control button:hover {
+  background-color: var(--accent-color);
+  color: var(--primary-color);
+}
+
+
+.sidebar-link.read {
+  color: #5ba3dd;
+  font-weight: bold;
+}
+
+.sidebar-link.active {
+  background-color: #f0f0f0;
+  border-left: 4px solid #007BFF;
+  font-weight: bold;
+  text-decoration: underline;
+}
+

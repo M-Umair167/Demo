@@ -17,47 +17,53 @@
 </section>
 
 <!-- Main Content -->
-</div>
 <section class="tutorial-detail-preview">
   <div class="container">
     <div class="tutorial-preview-content" id="content">
-      <h2>Welcome to CodePy Tutorials</h2>
-      <h2>Why Choose CodePy Python Tutorials?</h2>
-      <ul class="highlights-list">
-        <li>
-          <strong>Beginner-Friendly:</strong>
-          Our tutorials start from the basics — no prior coding experience needed!
-        </li>
-        <li>
-          <strong>Step-by-Step Learning:</strong>
-          Each concept is broken down into simple, easy-to-follow lessons.
-        </li>
-        <li>
-          <strong>Real-World Examples:</strong>
-          Understand Python with examples and mini-projects.
-        </li>
-        <li>
-          <strong>Modern Topics Included:</strong>
-          Cover not only the basics but also data structures, OOP, file handling, and web development with Python.
-        </li>
-        <li>
-          <strong>Beautiful and Clean UI:</strong>
-          Learn in an environment that's distraction-free and designed for ease.
-        </li>
-        <li>
-          <strong>Free and Open for All:</strong>
-          100% free tutorials. No signup required. Start learning anytime!
-        </li>
-        <li>
-          <strong>Quick Navigation:</strong>
-          Instantly jump to any topic using the sidebar for smooth browsing.
-        </li>
-        <li>
-          <strong>Trusted Learning Path:</strong>
-          Designed based on how real programmers learn — not just theory but also practice.
-        </li>
-      </ul>
+      <!-- Dynamic content goes here -->
+      <div id="dynamic-content">
+        <h2>Welcome to CodePy Tutorials</h2>
+        <h2>Why Choose CodePy Python Tutorials?</h2>
+        <ul class="highlights-list">
+          <li><strong>Beginner-Friendly:</strong> Our tutorials start from the basics — no prior coding experience
+            needed!</li>
+          <li><strong>Step-by-Step Learning:</strong> Each concept is broken down into simple, easy-to-follow lessons.
+          </li>
+          <li><strong>Real-World Examples:</strong> Understand Python with examples and mini-projects.</li>
+          <li><strong>Modern Topics Included:</strong> Cover not only the basics but also data structures, OOP, file
+            handling, and web development with Python.</li>
+          <li><strong>Beautiful and Clean UI:</strong> Learn in an environment that's distraction-free and designed for
+            ease.</li>
+          <li><strong>Free and Open for All:</strong> 100% free tutorials. No signup required. Start learning anytime!
+          </li>
+          <li><strong>Quick Navigation:</strong> Instantly jump to any topic using the sidebar for smooth browsing.</li>
+          <li><strong>Trusted Learning Path:</strong> Designed based on how real programmers learn — not just theory but
+            also practice.</li>
+        </ul>
+      </div>
+
+
+      <!-- templates/about.html -->
+      <div class="control_btn">
+
+        <div class="control">
+          <button onclick="prevTopic(event)" id="prevBtn">Previous</button>
+        </div>
+
+        {% if current_user.is_authenticated %}
+        <div class="control">
+          <button onclick="markAsRead(event)" id="markReadBtn">Mark as Read</button>
+        </div>
+        {% endif %}
+
+        <div class="control">
+          <button onclick="nextTopic(event)">Next</button>
+        </div>
+
+      </div>
+
     </div>
+
 
     <div class="tutorial-navigation">
       <h3>Tutorial Navigation</h3>
@@ -87,5 +93,6 @@
 
 </section>
 
-<script src="{{ url_for('static', filename='js/documantation.js') }}"></script>
+
+<script src="{{ url_for('static', filename='js/documentation.js') }}"></script>
 {% endblock %}

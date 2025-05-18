@@ -107,29 +107,29 @@ print("\nThanks for using our interactive compiler!")</textarea>
         <button id="toggle-chat" class="toggle-btn">⮜</button>
     </div>
     <div class="chat-body" id="chat-body">
-        <div class="message assistant">Hi! How can I help you with your code today?</div>
+        <div class="message-assistant">Hi! How can I help you with your code today?</div>
     </div>
     <div class="chat-input">
         <textarea id="ai-user-input" placeholder="Type your message..."></textarea>
     </div>
     <button id="send-btn">Send</button>
+
 </div>
 
 
 <!-- compiler scripts -->
 <script src="{{ url_for('static', filename='js/compiler.js') }}"></script>
 
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
 
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/lib/core.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/highlight.js/lib/common.min.js"></script>
-<script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/python.min.js"></script>
+<script src="{{ url_for('static', filename='js/shared-chat.js') }}"></script>
 
 <!-- ai pop up and assistant  -->
 <script>
@@ -137,9 +137,8 @@ print("\nThanks for using our interactive compiler!")</textarea>
         const chatMessages = document.getElementById("chat-body");
         const userInput = document.getElementById("ai-user-input");
         const sendBtn = document.getElementById("send-btn");
-        const welcomeMessage = document.getElementById('welcomeMessage');
 
-        // Handle AI chat popup if present
+        // Handle popup toggle
         const aiChatPopup = document.getElementById("ai-chat-popup");
         const askAiBtn = document.getElementById("ask-ai-btn");
         const toggleChat = document.getElementById("toggle-chat");
@@ -162,7 +161,7 @@ print("\nThanks for using our interactive compiler!")</textarea>
             this.style.height = Math.min(this.scrollHeight, 120) + "px";
         });
 
-        // Handle Enter key (Shift+Enter for newline)
+        // Handle Enter key
         userInput.addEventListener("keydown", function (e) {
             if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
@@ -172,84 +171,120 @@ print("\nThanks for using our interactive compiler!")</textarea>
 
         sendBtn.addEventListener("click", handleSend);
 
-        function handleSend() {
+        async function handleSend() {
             const message = userInput.value.trim();
             if (!message) return;
 
-            // Add user message to chat
+            console.log("Sending message:", message); // Debug log
+
+            // Add user message
             addMessage("user", message);
             userInput.value = "";
             userInput.style.height = "auto";
 
-            if (welcomeMessage) welcomeMessage.style.display = "none";
-
-            // Show loading message
+            // Show loading indicator
+            const loadingId = "loading-" + Date.now();
             const loadingDiv = document.createElement("div");
-            loadingDiv.className = "message assistant-message";
+            loadingDiv.className = "message assistant";
+            loadingDiv.id = loadingId;
             loadingDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Thinking...';
             chatMessages.appendChild(loadingDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
 
-            const isGenerationRequest = shouldGenerateCode(message);
-            const apiUrl = isGenerationRequest ? "/api/generate" : "/api/assist";
-            const requestData = isGenerationRequest ? { description: message } : { query: message };
-
-            fetch(apiUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(requestData)
-            })
-                .then(res => res.json())
-                .then(data => {
-                    chatMessages.removeChild(loadingDiv);
-                    if (data.error) {
-                        addMessage("assistant", data.error, true);
-                    } else {
-                        const content = isGenerationRequest ? data.code : data.response;
-                        const isError = content.toLowerCase().includes("failed");
-                        const isCode = isGenerationRequest && !isError;
-                        addMessage("assistant", content, isError, isCode);
-                    }
-                })
-                .catch(err => {
-                    chatMessages.removeChild(loadingDiv);
-                    addMessage("assistant", "Failed to get response: " + err.message, true);
+            try {
+                const response = await fetch("/api/ask", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ query: message })
                 });
+
+                console.log("Response status:", response.status); // Debug log
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log("Response data:", data); // Debug log
+
+                // Remove loading indicator
+                const loadingElement = document.getElementById(loadingId);
+                if (loadingElement) loadingElement.remove();
+
+                // Handle response
+                if (data.error) {
+                    addMessage("assistant", `Error: ${data.error}`, true);
+                } else {
+                    const answer = data.answer || data.response;
+                    const code = data.code;
+
+                    if (code) {
+                        addMessage("assistant",
+                            `<p>${answer}</p>
+                         <div class="code-block">
+                            <pre><code class="language-python">${escapeHTML(code)}</code></pre>
+                         </div>`,
+                            true);
+                    } else {
+                        addMessage("assistant", answer);
+                    }
+                }
+            } catch (error) {
+                console.error("Fetch error:", error);
+                const loadingElement = document.getElementById(loadingId);
+                if (loadingElement) loadingElement.remove();
+                addMessage("assistant", `Error: ${error.message}`, true);
+            }
         }
 
-        function shouldGenerateCode(message) {
-            const lowerMsg = message.toLowerCase();
-            const generationKeywords = ['generate', 'create', 'write', 'make', 'code for', 'implement'];
-            const assistanceKeywords = ['explain', 'debug', 'fix', 'correct', 'error', 'issue', 'what is', 'how does', 'improve', 'refactor'];
-            const looksLikeCode = /(def|class|import|for|while|if|else|try|except|return|print)/.test(message);
-
-            return generationKeywords.some(kw => lowerMsg.includes(kw)) &&
-                !assistanceKeywords.some(kw => lowerMsg.includes(kw)) &&
-                !looksLikeCode;
-        }
-
-        function addMessage(role, content, isError = false, isCode = false) {
+        function addMessage(role, content, isHTML = false) {
             const messageDiv = document.createElement("div");
-            messageDiv.className = `message ${role}${isError ? " error-message" : ""}`;
+            messageDiv.className = `message ${role}`;
 
+            const messageContent = document.createElement("div");
+            messageContent.className = "message-content";
 
-            if (isCode) {
-                const codeBlock = document.createElement("pre");
-                codeBlock.className = "code-block";
-                codeBlock.textContent = content;
-                messageDiv.appendChild(codeBlock);
+            if (isHTML) {
+                messageContent.innerHTML = content;
             } else {
-                messageDiv.innerHTML = marked.parse(content);
-                const codeBlocks = messageDiv.querySelectorAll("pre code");
-                codeBlocks.forEach(block => hljs.highlightElement(block));
+                messageContent.textContent = content;
             }
 
+            // Highlight code and add copy button
+            messageContent.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightElement(block);
+                
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'copy-code-btn';
+                copyBtn.innerHTML = '<i class="far fa-copy"></i>';
+                copyBtn.title = 'Copy code';
+                copyBtn.addEventListener('click', () => {
+                    navigator.clipboard.writeText(block.textContent);
+                    copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+                    setTimeout(() => {
+                        copyBtn.innerHTML = '<i class="far fa-copy"></i>';
+                    }, 2000);
+                });
+                
+                block.parentNode.insertBefore(copyBtn, block);
+            });
+
+            messageDiv.appendChild(messageContent);
             chatMessages.appendChild(messageDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
+
+        function escapeHTML(str) {
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
     });
 </script>
-
-
 
 {% endblock %}

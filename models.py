@@ -1,7 +1,8 @@
 from app import db
 import bcrypt
+from flask_login import UserMixin
 
-class User(db.Model):
+class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), unique=True)
@@ -19,3 +20,12 @@ class Contact(db.Model):
     email = db.Column(db.String(100), nullable=False)
     phone = db.Column(db.String(20))
     message = db.Column(db.Text, nullable=False)
+
+class ReadTopic(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    topic_name = db.Column(db.String(50))
+
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'topic_name', name='unique_user_topic'),
+    )

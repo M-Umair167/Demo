@@ -1441,13 +1441,146 @@ This will always execute.
     <p>Understanding and handling exceptions is a crucial part of writing robust Python programs. Whether it's preventing your app from crashing due to unexpected input or ensuring resources are cleaned up correctly, exception handling is a skill every Python developer must master. Always anticipate what could go wrong and use try/except/finally blocks wisely to make your code more reliable and user-friendly.</p>
 `
 };
-// Function to load content dynamically
-function loadContent(section) {
-    document.getElementById("content").innerHTML = contentData[section];
 
-    // Remove 'active' class from all sidebar links
-    document.querySelectorAll(".sidebar-link").forEach(link => link.classList.remove("active"));
 
-    // Add 'active' class to the clicked link
-    event.target.classList.add("active");
-} 
+const tutorialTopics = Object.keys(contentData);
+let currentIndex = 0;
+
+// Detect login status from <body data-logged-in="true|false">
+const isLoggedIn = document.body.getAttribute("data-logged-in") === "true";
+
+// Load readTopics only if logged in
+let readTopics = new Set();
+
+document.addEventListener("DOMContentLoaded", () => {
+    if (isLoggedIn) {
+        fetch('/get-read-topics')
+            .then(response => response.json())
+            .then(data => {
+                readTopics = new Set(data);
+                updateReadUI();
+            });
+    } else {
+        // Don't load any read topics for logged-out users
+        readTopics = new Set();
+        updateReadUI();
+    }
+});
+
+function loadContent(section, event = null) {
+    if (event) event.preventDefault();
+
+    // Load dynamic content
+    document.getElementById("dynamic-content").innerHTML = contentData[section];
+
+    // Set active link
+    document.querySelectorAll(".sidebar-link").forEach(link => {
+        link.classList.remove("active");
+        if (link.getAttribute("onclick").includes(`'${section}'`)) {
+            link.classList.add("active");
+        }
+    });
+
+    currentIndex = tutorialTopics.indexOf(section);
+    updateReadUI();
+}
+
+function nextTopic(event) {
+    if (event) event.preventDefault();
+    if (currentIndex < tutorialTopics.length - 1) {
+        currentIndex++;
+        loadContent(tutorialTopics[currentIndex]);
+    }
+}
+
+function prevTopic(event) {
+    if (event) event.preventDefault();
+    if (currentIndex > 0) {
+        currentIndex--;
+        loadContent(tutorialTopics[currentIndex]);
+    }
+}
+
+function markAsRead() {
+    if (!isLoggedIn) return;
+
+    const topic = tutorialTopics[currentIndex];
+    fetch('/mark-read', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic }),
+    }).then(() => {
+        readTopics.add(topic);
+        updateReadUI();
+    });
+}
+
+function unmarkAsRead() {
+    if (!isLoggedIn) return;
+
+    const topic = tutorialTopics[currentIndex];
+    fetch('/unmark-read', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic }),
+    }).then(() => {
+        readTopics.delete(topic);
+        updateReadUI();
+    });
+}
+
+function updateReadUI() {
+    const prevBtn = document.getElementById("prevBtn");
+    const markReadBtn = document.getElementById("markReadBtn");
+
+    if (prevBtn) {
+        prevBtn.style.display = currentIndex === 0 ? "none" : "inline-block";
+    }
+
+    if (markReadBtn) {
+        if (!isLoggedIn) {
+            markReadBtn.style.display = "none";
+        } else {
+            markReadBtn.style.display = "inline-block";
+
+            const topic = tutorialTopics[currentIndex];
+            if (readTopics.has(topic)) {
+                markReadBtn.innerText = "Mark as Unread";
+                markReadBtn.onclick = unmarkAsRead;
+            } else {
+                markReadBtn.innerText = "Mark as Read";
+                markReadBtn.onclick = markAsRead;
+            }
+        }
+    }
+
+    // Only update the sidebar links if logged in
+    if (isLoggedIn) {
+        document.querySelectorAll(".sidebar-link").forEach(link => {
+            const topic = link.getAttribute("onclick").match(/'([^']+)'/)[1];
+            if (readTopics.has(topic)) {
+                link.classList.add("read");
+            } else {
+                link.classList.remove("read");
+            }
+        });
+    } else {
+        // Remove all 'read' classes when logged out
+        document.querySelectorAll(".sidebar-link").forEach(link => {
+            link.classList.remove("read");
+        });
+    }
+}
+
+// Initial load
+window.onload = () => {
+    if (tutorialTopics.length > 0) {
+        loadContent(tutorialTopics[0]);
+    }
+
+    // Remove the Mark as Read button for logged-out users
+    const markReadBtn = document.getElementById("markReadBtn");
+    if (markReadBtn && !isLoggedIn) {
+        markReadBtn.style.display = "none";
+    }
+};

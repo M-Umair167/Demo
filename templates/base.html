@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/tutorials.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/styles.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/assistance.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/shared-chat.css') }}">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
@@ -24,7 +25,7 @@
   
 </head>
 
-<body>
+<body data-logged-in="{{ current_user.is_authenticated|lower }}">
     <header>
         <div class="container header-container">
             <a href="index.html" class="logo">
@@ -38,7 +39,7 @@
                     <li><a href="tutorials.html">SERVICES</a></li>
 
                     <!-- Profile Dropdown Here -->
-                    {% if session.get('email') %}
+                    {% if current_user.is_authenticated %}
                     <!-- Logged-in user profile menu -->
                     <li class="profile-menu">
                         <i class='fas fa-user-circle avatar' style="font-size: 28px; cursor: pointer;"></i>
@@ -90,9 +91,9 @@
                 <div class="footer-col">
                     <h3>Contact Us</h3>
                     <ul>
-                        <li><i class="fas fa-envelope"></i> hello@codepy.com</li>
-                        <li><i class="fas fa-phone"></i> +123-456-7890</li>
-                        <li><i class="fas fa-map-marker-alt"></i> 123 Anywhere St., Any City</li>
+                        <li><i class="fas fa-envelope"></i> f24bdats1m02012@iub.edu.pk</li>
+                        <li><i class="fas fa-phone"></i> +92 3143443430</li>
+                        <li><i class="fas fa-map-marker-alt"></i> Bahawalpur, Pakistan</li>
                     </ul>
                 </div>
             </div>
